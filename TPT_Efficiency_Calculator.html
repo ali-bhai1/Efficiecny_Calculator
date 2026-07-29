@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Efficiency Calculator</title>
+<style>
+  :root{
+    --navy:#1f3a5f;
+    --navy-dark:#16293f;
+    --gold:#e8ac2e;
+    --gold-light:#fdf1d6;
+    --purple:#6a3fa0;
+    --purple-light:#f1e8fa;
+    --blue:#2f7fc9;
+    --blue-light:#e7f2fc;
+    --green:#4c8c3c;
+    --green-light:#eef7ea;
+    --red:#c0392b;
+    --red-light:#fbe9e7;
+    --bg:#f3f4f6;
+    --card:#ffffff;
+    --border:#d9dce1;
+    --text:#232529;
+    --text-mute:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;}
+  .header{
+    background:linear-gradient(135deg,var(--navy),var(--navy-dark));
+    color:#fff;
+    border-radius:12px;
+    padding:20px 26px;
+    margin-bottom:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  .header h1{margin:0;font-size:20px;font-weight:700;letter-spacing:.3px;}
+  .header p{margin:4px 0 0;font-size:13px;color:#cbd9ec;}
+  .save-status{font-size:12px;color:#a9c1de;}
+
+  .controls-bar{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px 20px;
+    margin-bottom:18px;
+    display:flex;
+    gap:24px;
+    flex-wrap:wrap;
+    align-items:flex-end;
+  }
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mute);}
+  .field input{
+    border:1.5px solid var(--gold);
+    background:var(--gold-light);
+    border-radius:8px;
+    padding:9px 12px;
+    font-size:16px;
+    font-weight:700;
+    width:140px;
+    color:var(--navy-dark);
+  }
+  .field input:focus{outline:2px solid var(--gold);outline-offset:1px;}
+  .btn{
+    border:1px solid var(--border);
+    background:#fff;
+    border-radius:8px;
+    padding:9px 14px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    color:var(--text);
+    transition:background .15s;
+  }
+  .btn:hover{background:#f2f3f5;}
+  .btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+  .btn-primary:hover{background:var(--navy-dark);}
+  .btn-danger{color:var(--red);}
+  .btn-danger:hover{background:var(--red-light);}
+
+  .summary-row{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:12px;
+    margin-bottom:18px;
+  }
+  .stat{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .stat .label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-mute);margin-bottom:6px;}
+  .stat .value{font-size:24px;font-weight:700;color:var(--navy-dark);}
+  .stat.eff .value{color:var(--green);}
+  .stat.eff.low .value{color:var(--red);}
+  .stat.remaining .value{color:var(--purple);}
+
+  .table-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:18px;
+  }
+  .table-scroll{overflow-x:auto;}
+  table{border-collapse:collapse;width:100%;min-width:980px;}
+  thead tr.grp th{
+    background:var(--navy);
+    color:#fff;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    padding:8px 10px;
+    text-align:center;
+    border-right:1px solid rgba(255,255,255,.15);
+  }
+  thead tr.cols th{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.3px;
+    padding:8px 10px;
+    text-align:center;
+    border-bottom:2px solid var(--border);
+    color:#fff;
+    white-space:nowrap;
+  }
+  thead tr.cols th.workflow-h{background:var(--navy-dark);text-align:left;}
+  thead tr.cols th.tpt-h{background:var(--gold);color:var(--navy-dark);}
+  thead tr.cols th.done-h{background:var(--purple);}
+  thead tr.cols th.mins-h{background:var(--green);}
+  thead tr.cols th.remain-h{background:var(--blue);}
+  tbody td{
+    padding:6px 8px;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    font-size:13px;
+  }
+  tbody tr:nth-child(even){background:#fafbfc;}
+  tbody tr:hover{background:var(--blue-light);}
+  td.workflow-cell{text-align:left;}
+  td.workflow-cell input{
+    width:100%;
+    border:1px solid transparent;
+    background:transparent;
+    font-weight:600;
+    font-size:13px;
+    padding:6px 4px;
+    border-radius:6px;
+  }
+  td.workflow-cell input:hover{border-color:var(--border);}
+  td.workflow-cell input:focus{border-color:var(--navy);background:#fff;outline:none;}
+  input.tpt-input{
+    width:66px;
+    padding:6px;
+    border:1px solid var(--gold);
+    background:var(--gold-light);
+    border-radius:6px;
+    text-align:center;
+    font-weight:600;
+    font-size:13px;
+  }
+  input.done-input{
+    width:66px;
+    padding:6px;
+    border:1px solid var(--purple);
+    background:var(--purple-light);
+    border-radius:6px;
+    text-align:center;
+    font-weight:600;
+    font-size:13px;
+  }
+  input.tpt-input:focus, input.done-input:focus{outline:2px solid var(--navy);outline-offset:1px;}
+  td.mins-cell{background:var(--green-light);font-weight:700;color:#2f5a25;}
+  td.remain-cell{background:var(--blue-light);font-weight:700;color:#1e5a91;}
+  td.remain-cell.done{color:var(--green);}
+  td.remove-cell{width:70px;}
+  .remove-btn{
+    border:1px solid var(--red);background:none;color:var(--red);cursor:pointer;font-size:12px;
+    font-weight:600;padding:5px 10px;border-radius:6px;line-height:1;white-space:nowrap;
+  }
+  .remove-btn:hover{background:var(--red);color:#fff;}
+
+  tfoot td{
+    padding:12px 10px;
+    font-weight:700;
+    background:var(--navy);
+    color:#fff;
+    font-size:13px;
+  }
+  tfoot td.foot-label{text-align:right;text-transform:uppercase;font-size:11px;letter-spacing:.4px;color:#cbd9ec;}
+
+  .add-row-bar{padding:10px 14px;border-top:1px solid var(--border);}
+
+  .note{
+    background:var(--gold-light);
+    border:1px solid var(--gold);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:12.5px;
+    color:#6b5008;
+    line-height:1.5;
+  }
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="sr-only">TPT efficiency calculator: enter time-per-task by lead and tasks completed to get live efficiency percentage and tasks remaining to reach 100%.</h2>
+
+  <div class="header">
+    <div>
+      <h1> Efficiency Calculator</h1>
+      <p>Set TPT once, enter tasks completed daily, track efficiency live.</p>
+    </div>
+    <div class="save-status" id="saveStatus">All changes save automatically</div>
+  </div>
+
+  <div class="controls-bar">
+    <div class="field">
+      <label for="projectMins">Project minutes</label>
+      <input type="number" id="projectMins" value="450" min="0" step="1">
+    </div>
+    <button class="btn" id="addRowBtn">+ Add workflow</button>
+    <button class="btn" id="resetDoneBtn">Clear tasks done</button>
+    <button class="btn btn-danger" id="resetAllBtn">Reset everything</button>
+    <div style="flex:1"></div>
+  </div>
+
+  <div class="summary-row">
+    <div class="stat">
+      <div class="label">Total mins used</div>
+      <div class="value" id="statMinsUsed">0</div>
+    </div>
+    <div class="stat eff" id="statEffCard">
+      <div class="label">Current efficiency</div>
+      <div class="value" id="statEff">0%</div>
+    </div>
+    <div class="stat remaining">
+      <div class="label">Mins remaining to 100%</div>
+      <div class="value" id="statMinsRemaining">450</div>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-scroll">
+      <table id="calcTable">
+        <thead>
+          <tr class="grp">
+            <th colspan="1" style="background:var(--navy-dark);"></th>
+            <th colspan="3">TPT — set by lead (mins/task)</th>
+            <th colspan="3">Tasks completed today</th>
+            <th colspan="1">Mins used</th>
+            <th colspan="3">Tasks needed for 100% (this workflow alone)</th>
+            <th></th>
+          </tr>
+          <tr class="cols">
+            <th class="workflow-h">Workflow</th>
+            <th class="tpt-h">TPT P702</th>
+            <th class="tpt-h">TPT P758</th>
+            <th class="tpt-h">TPT DVP</th>
+            <th class="done-h">Done P702</th>
+            <th class="done-h">Done P758</th>
+            <th class="done-h">Done DVP</th>
+            <th class="mins-h">Mins used</th>
+            <th class="remain-h">P702 remaining</th>
+            <th class="remain-h">P758 remaining</th>
+            <th class="remain-h">DVP remaining</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+        <tfoot>
+          <tr>
+            <td class="foot-label">Totals</td>
+            <td colspan="6"></td>
+            <td id="footMins">0</td>
+            <td colspan="3" id="footEff">Efficiency: 0%</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="add-row-bar">
+      <button class="btn" id="addRowBtn2"><i class="ti ti-plus" aria-hidden="true"></i> Add workflow row</button>
+    </div>
+  </div>
+
+  <div class="note">
+    Leads enter TPT (mins per task) once per workflow — update weekly if targets change. Operators/leads then enter tasks completed. Efficiency = total mins used ÷ project minutes. "Tasks needed for 100%" per column assumes all remaining minutes are spent on that single workflow using its TPT.
+  </div>
+</div>
+
+<script>
+const DEFAULT_WORKFLOWS = [
+  {name:"SE", tptP702:null, tptP758:13, tptDVP:5, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"PreGen", tptP702:null, tptP758:10, tptDVP:4, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D Static", tptP702:119, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D Actor", tptP702:196, tptP758:null, tptDVP:37, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D QA", tptP702:58, tptP758:null, tptDVP:15, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"2D Occlusion IL", tptP702:null, tptP758:13, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"2D Front Camera IL", tptP702:null, tptP758:4, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"VLS IL", tptP702:null, tptP758:8, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"VLS QA", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"Has Rider", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0}
+];
+
+let state = {
+  projectMins: 450,
+  rows: JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS))
+};
+
+const STORAGE_KEY = "tpt-calculator-state";
+let saveTimer = null;
+
+function scheduleSave(){
+  const el = document.getElementById("saveStatus");
+  el.textContent = "Saving…";
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(state), false);
+      el.textContent = "All changes saved";
+    }catch(e){
+      el.textContent = "Couldn't save — changes are still visible this session";
+    }
+  }, 400);
+}
+
+async function loadState(){
+  try{
+    const result = await window.storage.get(STORAGE_KEY, false);
+    if(result && result.value){
+      const parsed = JSON.parse(result.value);
+      if(parsed && Array.isArray(parsed.rows) && parsed.rows.length){
+        state = parsed;
+      }
+    }
+  }catch(e){
+    // no saved state yet, use defaults
+  }
+  render();
+}
+
+function fmt(n){
+  if(n === null || n === undefined || isNaN(n)) return "";
+  return Math.round(n * 100) / 100;
+}
+
+function computeRowMins(row){
+  let mins = 0;
+  if(row.tptP702) mins += (row.doneP702||0) * row.tptP702;
+  if(row.tptP758) mins += (row.doneP758||0) * row.tptP758;
+  if(row.tptDVP) mins += (row.doneDVP||0) * row.tptDVP;
+  return mins;
+}
+
+function computeTotals(){
+  let totalMins = 0;
+  state.rows.forEach(r => totalMins += computeRowMins(r));
+  const projectMins = Number(state.projectMins) || 0;
+  const efficiency = projectMins > 0 ? (totalMins / projectMins) * 100 : 0;
+  const minsRemaining = Math.max(projectMins - totalMins, 0);
+  return {totalMins, efficiency, minsRemaining, projectMins};
+}
+
+function render(){
+  document.getElementById("projectMins").value = state.projectMins;
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  const {totalMins, efficiency, minsRemaining} = computeTotals();
+
+  state.rows.forEach((row, i) => {
+    const rowMins = computeRowMins(row);
+    const tr = document.createElement("tr");
+
+    const remainP702 = row.tptP702 ? Math.ceil(minsRemaining / row.tptP702) : null;
+    const remainP758 = row.tptP758 ? Math.ceil(minsRemaining / row.tptP758) : null;
+    const remainDVP = row.tptDVP ? Math.ceil(minsRemaining / row.tptDVP) : null;
+
+    tr.innerHTML = `
+      <td class="workflow-cell"><input type="text" value="${escapeHtml(row.name)}" data-idx="${i}" data-field="name"></td>
+      <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptP702 ?? ""}" data-idx="${i}" data-field="tptP702" placeholder="—"></td>
+      <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptP758 ?? ""}" data-idx="${i}" data-field="tptP758" placeholder="—"></td>
+      <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptDVP ?? ""}" data-idx="${i}" data-field="tptDVP" placeholder="—"></td>
+      <td><input type="number" class="done-input" min="0" step="1" value="${row.doneP702 ?? 0}" data-idx="${i}" data-field="doneP702"></td>
+      <td><input type="number" class="done-input" min="0" step="1" value="${row.doneP758 ?? 0}" data-idx="${i}" data-field="doneP758"></td>
+      <td><input type="number" class="done-input" min="0" step="1" value="${row.doneDVP ?? 0}" data-idx="${i}" data-field="doneDVP"></td>
+      <td class="mins-cell">${fmt(rowMins)}</td>
+      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainP702 === null ? "—" : (minsRemaining<=0?"Done":remainP702)}</td>
+      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainP758 === null ? "—" : (minsRemaining<=0?"Done":remainP758)}</td>
+      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainDVP === null ? "—" : (minsRemaining<=0?"Done":remainDVP)}</td>
+      <td class="remove-cell"><button class="remove-btn" data-idx="${i}" aria-label="Remove ${escapeHtml(row.name)}" title="Delete this workflow">Delete</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("statMinsUsed").textContent = fmt(totalMins);
+  document.getElementById("statEff").textContent = fmt(efficiency) + "%";
+  document.getElementById("statMinsRemaining").textContent = fmt(minsRemaining);
+  document.getElementById("footMins").textContent = fmt(totalMins);
+  document.getElementById("footEff").textContent = "Efficiency: " + fmt(efficiency) + "%";
+
+  const effCard = document.getElementById("statEffCard");
+  effCard.classList.toggle("low", efficiency < 100);
+
+  attachRowListeners();
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function attachRowListeners(){
+  document.querySelectorAll("#tbody input").forEach(input => {
+    input.addEventListener("input", (e) => {
+      const idx = Number(e.target.dataset.idx);
+      const field = e.target.dataset.field;
+      let val = e.target.value;
+      if(field === "name"){
+        state.rows[idx].name = val;
+      } else {
+        state.rows[idx][field] = val === "" ? null : Number(val);
+      }
+      render();
+      scheduleSave();
+    });
+  });
+  document.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      const idx = Number(e.currentTarget.dataset.idx);
+      state.rows.splice(idx, 1);
+      render();
+      scheduleSave();
+    });
+  });
+}
+
+document.getElementById("projectMins").addEventListener("input", (e) => {
+  state.projectMins = e.target.value === "" ? 0 : Number(e.target.value);
+  render();
+  scheduleSave();
+});
+
+function addRow(){
+  state.rows.push({name:"New workflow", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0});
+  render();
+  scheduleSave();
+}
+document.getElementById("addRowBtn").addEventListener("click", addRow);
+document.getElementById("addRowBtn2").addEventListener("click", addRow);
+
+document.getElementById("resetDoneBtn").addEventListener("click", () => {
+  state.rows.forEach(r => { r.doneP702 = 0; r.doneP758 = 0; r.doneDVP = 0; });
+  render();
+  scheduleSave();
+});
+
+document.getElementById("resetAllBtn").addEventListener("click", () => {
+  if(confirm("Reset all workflows and TPT values back to defaults? This can't be undone.")){
+    state = {projectMins: 450, rows: JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS))};
+    render();
+    scheduleSave();
+  }
+});
+
+loadState();
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+</body>
+</html>
