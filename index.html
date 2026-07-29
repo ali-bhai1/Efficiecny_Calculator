@@ -484,12 +484,9 @@ function applyPermissions(){
     el.style.display = isLead ? "" : "none";
   });
   
+  // Project Minutes remains editable for EVERYONE (Leads + Operators)
   const projectMinsInput = document.getElementById("projectMins");
-  if(isLead){
-    projectMinsInput.removeAttribute("readonly");
-  } else {
-    projectMinsInput.setAttribute("readonly", "readonly");
-  }
+  projectMinsInput.removeAttribute("readonly");
 }
 
 document.getElementById("loginForm").addEventListener("submit", (e) => {
