@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Efficiency Calculator</title>
+<title>Efficiency Calculator</title>
 <style>
   :root{
     --navy:#1f3a5f;
@@ -120,6 +120,58 @@
   .stat.eff .value{color:var(--green);}
   .stat.eff.low .value{color:var(--red);}
   .stat.remaining .value{color:var(--purple);}
+
+  /* Steps Section Banner Above Table */
+  .steps-banner {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--navy);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 18px;
+  }
+  .steps-banner h3 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: var(--bg);
+    padding: 10px 12px;
+    border-radius: 8px;
+  }
+  .step-badge {
+    background: var(--navy);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text {
+    font-size: 12.5px;
+    line-height: 1.4;
+    color: var(--text);
+  }
+  .step-text strong {
+    color: var(--navy-dark);
+  }
 
   .table-card{
     background:var(--card);
@@ -273,6 +325,29 @@
     <div class="stat remaining">
       <div class="label">Mins remaining to 100%</div>
       <div class="value" id="statMinsRemaining">450</div>
+    </div>
+  </div>
+
+  <!-- HOW TO USE / STEPS SECTION -->
+  <div class="steps-banner">
+    <h3>📌 How To Use (Quick Steps)</h3>
+    <div class="steps-grid">
+      <div class="step-item">
+        <div class="step-badge">1</div>
+        <div class="step-text"><strong>Set Shift Time:</strong> Enter your working time for the day in <strong>Project Minutes</strong> (Default: 450 mins).</div>
+      </div>
+      <div class="step-item">
+        <div class="step-badge">2</div>
+        <div class="step-text"><strong>Enter Tasks Completed:</strong> Log completed work under the purple <strong>Done P702 / Done P758 / Done DVP</strong> columns.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-badge">3</div>
+        <div class="step-text"><strong>Check Live Results:</strong> View dynamic calculations in <strong>Mins Used</strong> and <strong>Tasks Needed for 100%</strong>.</div>
+      </div>
+      <div class="step-item">
+        <div class="step-badge">4</div>
+        <div class="step-text"><strong>Admin Settings:</strong> Click <strong>Admin</strong> to unlock and modify gold <strong>TPT Targets</strong> or add/remove workflows.</div>
+      </div>
     </div>
   </div>
 
@@ -446,20 +521,74 @@ function computeTotals(){
   return {totalMins, efficiency, minsRemaining, projectMins};
 }
 
+function formatRemainingCell(tpt, minsRemaining, projectMins) {
+  if (!tpt || projectMins <= 0) return "—";
+  if (minsRemaining <= 0) return "Done";
+  return Math.ceil(minsRemaining / tpt);
+}
+
+function updateCalculationsOnly() {
+  const {totalMins, efficiency, minsRemaining, projectMins} = computeTotals();
+  const trs = document.querySelectorAll("#tbody tr");
+
+  state.rows.forEach((row, i) => {
+    const tr = trs[i];
+    if (!tr) return;
+
+    const rowMins = computeRowMins(row);
+    const remainP702Text = formatRemainingCell(row.tptP702, minsRemaining, projectMins);
+    const remainP758Text = formatRemainingCell(row.tptP758, minsRemaining, projectMins);
+    const remainDVPText  = formatRemainingCell(row.tptDVP, minsRemaining, projectMins);
+
+    const minsCell = tr.children[7];
+    const p702Cell = tr.children[8];
+    const p758Cell = tr.children[9];
+    const dvpCell  = tr.children[10];
+
+    if (minsCell) minsCell.textContent = fmt(rowMins);
+
+    if (p702Cell) {
+      p702Cell.textContent = remainP702Text;
+      p702Cell.className = `remain-cell ${remainP702Text === 'Done' ? 'done' : ''}`;
+    }
+    if (p758Cell) {
+      p758Cell.textContent = remainP758Text;
+      p758Cell.className = `remain-cell ${remainP758Text === 'Done' ? 'done' : ''}`;
+    }
+    if (dvpCell) {
+      dvpCell.textContent = remainDVPText;
+      dvpCell.className = `remain-cell ${remainDVPText === 'Done' ? 'done' : ''}`;
+    }
+  });
+
+  document.getElementById("statMinsUsed").textContent = fmt(totalMins);
+  document.getElementById("statEff").textContent = fmt(efficiency) + "%";
+  document.getElementById("statMinsRemaining").textContent = fmt(minsRemaining);
+  document.getElementById("footMins").textContent = fmt(totalMins);
+  document.getElementById("footEff").textContent = "Efficiency: " + fmt(efficiency) + "%";
+
+  const effCard = document.getElementById("statEffCard");
+  effCard.classList.toggle("low", efficiency < 100);
+}
+
 function render(){
   document.getElementById("projectMins").value = state.projectMins;
   const tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
-  const {totalMins, efficiency, minsRemaining} = computeTotals();
+  const {totalMins, efficiency, minsRemaining, projectMins} = computeTotals();
 
   state.rows.forEach((row, i) => {
     const rowMins = computeRowMins(row);
     const tr = document.createElement("tr");
 
-    const remainP702 = row.tptP702 ? Math.ceil(minsRemaining / row.tptP702) : null;
-    const remainP758 = row.tptP758 ? Math.ceil(minsRemaining / row.tptP758) : null;
-    const remainDVP = row.tptDVP ? Math.ceil(minsRemaining / row.tptDVP) : null;
+    const remainP702Text = formatRemainingCell(row.tptP702, minsRemaining, projectMins);
+    const remainP758Text = formatRemainingCell(row.tptP758, minsRemaining, projectMins);
+    const remainDVPText  = formatRemainingCell(row.tptDVP, minsRemaining, projectMins);
+
+    const isDoneP702 = remainP702Text === "Done";
+    const isDoneP758 = remainP758Text === "Done";
+    const isDoneDVP  = remainDVPText === "Done";
 
     tr.innerHTML = `
       <td class="workflow-cell"><input type="text" value="${escapeHtml(row.name)}" data-idx="${i}" data-field="name" ${isAdmin ? '' : 'readonly'}></td>
@@ -470,9 +599,9 @@ function render(){
       <td><input type="number" class="done-input" min="0" step="1" value="${row.doneP758 ?? 0}" data-idx="${i}" data-field="doneP758"></td>
       <td><input type="number" class="done-input" min="0" step="1" value="${row.doneDVP ?? 0}" data-idx="${i}" data-field="doneDVP"></td>
       <td class="mins-cell">${fmt(rowMins)}</td>
-      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainP702 === null ? "—" : (minsRemaining<=0?"Done":remainP702)}</td>
-      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainP758 === null ? "—" : (minsRemaining<=0?"Done":remainP758)}</td>
-      <td class="remain-cell ${minsRemaining<=0?'done':''}">${remainDVP === null ? "—" : (minsRemaining<=0?"Done":remainDVP)}</td>
+      <td class="remain-cell ${isDoneP702 ? 'done' : ''}">${remainP702Text}</td>
+      <td class="remain-cell ${isDoneP758 ? 'done' : ''}">${remainP758Text}</td>
+      <td class="remain-cell ${isDoneDVP ? 'done' : ''}">${remainDVPText}</td>
       ${isAdmin ? `<td class="remove-cell"><button class="remove-btn" data-idx="${i}" aria-label="Remove ${escapeHtml(row.name)}" title="Delete this workflow">Delete</button></td>` : ''}
     `;
     tbody.appendChild(tr);
@@ -505,7 +634,7 @@ function attachRowListeners(){
       } else {
         state.rows[idx][field] = val === "" ? null : Number(val);
       }
-      render();
+      updateCalculationsOnly();
       scheduleSave();
     });
   });
@@ -521,7 +650,7 @@ function attachRowListeners(){
 
 document.getElementById("projectMins").addEventListener("input", (e) => {
   state.projectMins = e.target.value === "" ? 0 : Number(e.target.value);
-  render();
+  updateCalculationsOnly();
   scheduleSave();
 });
 
@@ -529,6 +658,13 @@ function addRow(){
   state.rows.push({name:"New workflow", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0});
   render();
   scheduleSave();
+  
+  // Focus and select the new input so you can type immediately
+  const lastRowInput = document.querySelector("#tbody tr:last-child .workflow-cell input");
+  if(lastRowInput){
+    lastRowInput.focus();
+    lastRowInput.select();
+  }
 }
 document.getElementById("addRowBtn").addEventListener("click", addRow);
 document.getElementById("addRowBtn2").addEventListener("click", addRow);
