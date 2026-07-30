@@ -302,7 +302,6 @@
     </div>
   </div>
 
-  <!-- HOW TO USE / STEPS SECTION (MOVED ABOVE CONTROLS BAR) -->
   <div class="steps-banner">
     <h3>📌 How To Use (Quick Steps)</h3>
     <div class="steps-grid">
@@ -391,7 +390,7 @@
       </table>
     </div>
     <div class="add-row-bar admin-only">
-      <button class="btn" id="addRowBtn2"><i class="ti ti-plus" aria-hidden="true"></i> Add workflow row</button>
+      <button class="btn" id="addRowBtn2">+ Add workflow row</button>
     </div>
   </div>
 
@@ -403,17 +402,19 @@
 <script>
 const ADMIN_PASSWORD = "iMerit#121";
 
+// UPDATED DEFAULTS MATCHING YOUR SPECIFIC IMAGE EXACTLY
 const DEFAULT_WORKFLOWS = [
-  {name:"SE", tptP702:null, tptP758:13, tptDVP:5, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"SE", tptP702:null, tptP758:14, tptDVP:5, doneP702:0, doneP758:0, doneDVP:0},
   {name:"PreGen", tptP702:null, tptP758:10, tptDVP:4, doneP702:0, doneP758:0, doneDVP:0},
-  {name:"3D Static", tptP702:119, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-  {name:"3D Actor", tptP702:196, tptP758:null, tptDVP:37, doneP702:0, doneP758:0, doneDVP:0},
-  {name:"3D QA", tptP702:58, tptP758:null, tptDVP:15, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D Static", tptP702:null, tptP758:119, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D Actor", tptP702:null, tptP758:196, tptDVP:37, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"3D QA", tptP702:null, tptP758:58, tptDVP:15, doneP702:0, doneP758:0, doneDVP:0},
   {name:"2D Occlusion IL", tptP702:null, tptP758:13, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
   {name:"2D Front Camera IL", tptP702:null, tptP758:4, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-  {name:"VLS IL", tptP702:null, tptP758:8, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"VLS IL", tptP702:null, tptP758:9, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
   {name:"VLS QA", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-  {name:"Has Rider", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0}
+  {name:"Has Rider", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
+  {name:"BPA", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0}
 ];
 
 let state = {
@@ -423,7 +424,7 @@ let state = {
 
 let isAdmin = false;
 
-const STORAGE_KEY = "tpt-calculator-state";
+const STORAGE_KEY = "tpt-calculator-state-v2"; // Changed storage key to avoid loading old cache
 const SESSION_ADMIN_KEY = "tpt-calculator-admin-unlocked";
 let saveTimer = null;
 
@@ -451,7 +452,7 @@ function loadState(){
       }
     }
   }catch(e){
-    // no saved state yet, use defaults
+    // default template will be used
   }
 }
 
@@ -685,6 +686,5 @@ document.getElementById("resetAllBtn").addEventListener("click", () => {
 loadState();
 checkAdminSession();
 </script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
 </body>
 </html>
