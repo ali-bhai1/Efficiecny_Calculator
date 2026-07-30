@@ -268,17 +268,6 @@
   tfoot td.foot-label{text-align:right;text-transform:uppercase;font-size:11px;letter-spacing:.4px;color:#cbd9ec;}
 
   .add-row-bar{padding:10px 14px;border-top:1px solid var(--border);}
-
-  .note{
-    background:var(--gold-light);
-    border:1px solid var(--gold);
-    border-radius:10px;
-    padding:12px 16px;
-    font-size:12.5px;
-    color:#6b5008;
-    line-height:1.5;
-  }
-  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -287,34 +276,34 @@
   <div class="header">
     <div>
       <h1>Efficiency Calculator</h1>
-      <p>Live cloud sync active across all users.</p>
+      <p>Global TPT values sync live across all users.</p>
     </div>
     <div class="header-right">
       <div class="role-display" id="roleDisplay">Role: Operator</div>
       <button class="btn" id="adminBtn">Admin</button>
       <button class="btn" id="lockBtn" style="display:none;">Lock</button>
-      <div class="save-status" id="saveStatus">Connecting to live database…</div>
+      <div class="save-status" id="saveStatus">Connecting to cloud…</div>
     </div>
   </div>
 
   <div class="steps-banner">
-    <h3>📌 How To Use (Quick Steps)</h3>
+    <h3>📌 How To Use</h3>
     <div class="steps-grid">
       <div class="step-item">
         <div class="step-badge">1</div>
-        <div class="step-text"><strong>Set Shift Time:</strong> Enter working time in <strong>Project Minutes</strong> (Default: 450).</div>
+        <div class="step-text"><strong>TPT Targets:</strong> Always synced automatically from cloud.</div>
       </div>
       <div class="step-item">
         <div class="step-badge">2</div>
-        <div class="step-text"><strong>Enter Tasks Completed:</strong> Log completed work under the purple <strong>Done</strong> columns.</div>
+        <div class="step-text"><strong>Enter Tasks Done:</strong> Inputs are personal to your device.</div>
       </div>
       <div class="step-item">
         <div class="step-badge">3</div>
-        <div class="step-text"><strong>Check Live Results:</strong> Updates in real-time for everyone across all screens.</div>
+        <div class="step-text"><strong>Calculate Efficiency:</strong> Results calculate instantly per user.</div>
       </div>
       <div class="step-item">
         <div class="step-badge">4</div>
-        <div class="step-text"><strong>Admin Settings:</strong> Click <strong>Admin</strong> to modify TPT Targets or add/remove workflows.</div>
+        <div class="step-text"><strong>Admin:</strong> Edit global TPT targets and workflow lists.</div>
       </div>
     </div>
   </div>
@@ -325,8 +314,8 @@
       <input type="number" id="projectMins" value="450" min="0" step="1">
     </div>
     <button class="btn admin-only" id="addRowBtn">+ Add workflow</button>
-    <button class="btn" id="resetDoneBtn">Clear tasks done</button>
-    <button class="btn btn-danger admin-only" id="resetAllBtn">Reset everything</button>
+    <button class="btn" id="resetDoneBtn">Clear my tasks done</button>
+    <button class="btn btn-danger admin-only" id="resetAllBtn">Reset global TPTs</button>
     <div style="flex:1"></div>
   </div>
 
@@ -351,10 +340,10 @@
         <thead>
           <tr class="grp">
             <th colspan="1" style="background:var(--navy-dark);"></th>
-            <th colspan="3">TPT — set by lead (mins/task)</th>
-            <th colspan="3">Tasks completed today</th>
+            <th colspan="3">TPT — set by lead (mins/task) [LIVE SYNCED]</th>
+            <th colspan="3">Tasks completed today (Local)</th>
             <th colspan="1">Mins used</th>
-            <th colspan="3">Tasks needed for 100% (this workflow alone)</th>
+            <th colspan="3">Tasks needed for 100%</th>
             <th class="admin-only"></th>
           </tr>
           <tr class="cols">
@@ -392,7 +381,6 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
   import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
   const firebaseConfig = {
@@ -402,47 +390,51 @@
     projectId: "efficiency-calculator-4d536",
     storageBucket: "efficiency-calculator-4d536.firebasestorage.app",
     messagingSenderId: "948806938279",
-    appId: "1:948806938279:web:9e43dff01b22fa46737582",
-    measurementId: "G-EPR4370K9X"
+    appId: "1:948806938279:web:9e43dff01b22fa46737582"
   };
 
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
   const db = getDatabase(app);
-  const dbRef = ref(db, 'calculator_state');
+  const dbRef = ref(db, 'calculator_tpt_config');
 
   const ADMIN_PASSWORD = "iMerit#121";
 
   const DEFAULT_WORKFLOWS = [
-    {name:"SE", tptP702:null, tptP758:14, tptDVP:5, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"PreGen", tptP702:null, tptP758:10, tptDVP:4, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"3D Static", tptP702:null, tptP758:119, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"3D Actor", tptP702:null, tptP758:196, tptDVP:37, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"3D QA", tptP702:null, tptP758:58, tptDVP:15, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"2D Occlusion IL", tptP702:null, tptP758:13, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"2D Front Camera IL", tptP702:null, tptP758:4, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"VLS IL", tptP702:null, tptP758:9, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"VLS QA", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"Has Rider", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0},
-    {name:"BPA", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0}
+    {id:"wf_1", name:"SE", tptP702:null, tptP758:14, tptDVP:5},
+    {id:"wf_2", name:"PreGen", tptP702:null, tptP758:10, tptDVP:4},
+    {id:"wf_3", name:"3D Static", tptP702:null, tptP758:119, tptDVP:null},
+    {id:"wf_4", name:"3D Actor", tptP702:null, tptP758:196, tptDVP:37},
+    {id:"wf_5", name:"3D QA", tptP702:null, tptP758:58, tptDVP:15},
+    {id:"wf_6", name:"2D Occlusion IL", tptP702:null, tptP758:13, tptDVP:null},
+    {id:"wf_7", name:"2D Front Camera IL", tptP702:null, tptP758:4, tptDVP:null},
+    {id:"wf_8", name:"VLS IL", tptP702:null, tptP758:9, tptDVP:null},
+    {id:"wf_9", name:"VLS QA", tptP702:null, tptP758:null, tptDVP:null},
+    {id:"wf_10", name:"Has Rider", tptP702:null, tptP758:null, tptDVP:null},
+    {id:"wf_11", name:"BPA", tptP702:null, tptP758:null, tptDVP:null}
   ];
 
-  let state = {
-    projectMins: 450,
+  let globalTptState = {
     rows: JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS))
+  };
+
+  // Local user data (stored per device in localStorage)
+  let localUserData = JSON.parse(localStorage.getItem('user_calc_data')) || {
+    projectMins: 450,
+    dones: {} // Keyed by row ID
   };
 
   let isAdmin = false;
   let isRemoteUpdating = false;
 
+  // Listen to global Cloud TPT state
   onValue(dbRef, (snapshot) => {
     const data = snapshot.val();
     if (data && data.rows) {
       isRemoteUpdating = true;
-      state = data;
+      globalTptState = data;
       render();
       isRemoteUpdating = false;
-      document.getElementById("saveStatus").textContent = "Live synced";
+      document.getElementById("saveStatus").textContent = "TPTs Live Synced";
     } else {
       pushToDatabase();
     }
@@ -450,10 +442,14 @@
 
   function pushToDatabase() {
     if (isRemoteUpdating) return;
-    document.getElementById("saveStatus").textContent = "Syncing…";
-    set(dbRef, state).then(() => {
-      document.getElementById("saveStatus").textContent = "Live synced";
+    document.getElementById("saveStatus").textContent = "Syncing TPTs…";
+    set(dbRef, globalTptState).then(() => {
+      document.getElementById("saveStatus").textContent = "TPTs Live Synced";
     });
+  }
+
+  function saveLocalUserData() {
+    localStorage.setItem('user_calc_data', JSON.stringify(localUserData));
   }
 
   function checkAdminSession(){
@@ -499,18 +495,23 @@
     return Math.round(n * 100) / 100;
   }
 
+  function getDoneValues(rowId){
+    return localUserData.dones[rowId] || {doneP702:0, doneP758:0, doneDVP:0};
+  }
+
   function computeRowMins(row){
+    const dones = getDoneValues(row.id);
     let mins = 0;
-    if(row.tptP702) mins += (row.doneP702||0) * row.tptP702;
-    if(row.tptP758) mins += (row.doneP758||0) * row.tptP758;
-    if(row.tptDVP) mins += (row.doneDVP||0) * row.tptDVP;
+    if(row.tptP702) mins += (dones.doneP702||0) * row.tptP702;
+    if(row.tptP758) mins += (dones.doneP758||0) * row.tptP758;
+    if(row.tptDVP) mins += (dones.doneDVP||0) * row.tptDVP;
     return mins;
   }
 
   function computeTotals(){
     let totalMins = 0;
-    state.rows.forEach(r => totalMins += computeRowMins(r));
-    const projectMins = Number(state.projectMins) || 0;
+    globalTptState.rows.forEach(r => totalMins += computeRowMins(r));
+    const projectMins = Number(localUserData.projectMins) || 0;
     const efficiency = projectMins > 0 ? (totalMins / projectMins) * 100 : 0;
     const minsRemaining = Math.max(projectMins - totalMins, 0);
     return {totalMins, efficiency, minsRemaining, projectMins};
@@ -523,14 +524,15 @@
   }
 
   function render(){
-    document.getElementById("projectMins").value = state.projectMins;
+    document.getElementById("projectMins").value = localUserData.projectMins;
     const tbody = document.getElementById("tbody");
     tbody.innerHTML = "";
 
     const {totalMins, efficiency, minsRemaining, projectMins} = computeTotals();
 
-    state.rows.forEach((row, i) => {
+    globalTptState.rows.forEach((row, i) => {
       const rowMins = computeRowMins(row);
+      const dones = getDoneValues(row.id);
       const tr = document.createElement("tr");
 
       const remainP702Text = formatRemainingCell(row.tptP702, minsRemaining, projectMins);
@@ -542,9 +544,9 @@
         <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptP702 ?? ""}" data-idx="${i}" data-field="tptP702" placeholder="—" ${isAdmin ? '' : 'readonly'}></td>
         <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptP758 ?? ""}" data-idx="${i}" data-field="tptP758" placeholder="—" ${isAdmin ? '' : 'readonly'}></td>
         <td><input type="number" class="tpt-input" min="0" step="0.1" value="${row.tptDVP ?? ""}" data-idx="${i}" data-field="tptDVP" placeholder="—" ${isAdmin ? '' : 'readonly'}></td>
-        <td><input type="number" class="done-input" min="0" step="1" value="${row.doneP702 ?? 0}" data-idx="${i}" data-field="doneP702"></td>
-        <td><input type="number" class="done-input" min="0" step="1" value="${row.doneP758 ?? 0}" data-idx="${i}" data-field="doneP758"></td>
-        <td><input type="number" class="done-input" min="0" step="1" value="${row.doneDVP ?? 0}" data-idx="${i}" data-field="doneDVP"></td>
+        <td><input type="number" class="done-input" min="0" step="1" value="${dones.doneP702 ?? 0}" data-rowid="${row.id}" data-field="doneP702"></td>
+        <td><input type="number" class="done-input" min="0" step="1" value="${dones.doneP758 ?? 0}" data-rowid="${row.id}" data-field="doneP758"></td>
+        <td><input type="number" class="done-input" min="0" step="1" value="${dones.doneDVP ?? 0}" data-rowid="${row.id}" data-field="doneDVP"></td>
         <td class="mins-cell">${fmt(rowMins)}</td>
         <td class="remain-cell ${remainP702Text === 'Done' ? 'done' : ''}">${remainP702Text}</td>
         <td class="remain-cell ${remainP758Text === 'Done' ? 'done' : ''}">${remainP758Text}</td>
@@ -563,57 +565,77 @@
     const effCard = document.getElementById("statEffCard");
     effCard.classList.toggle("low", efficiency < 100);
 
-    attachRowListeners();
+    attachListeners();
   }
 
   function escapeHtml(str){
     return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   }
 
-  function attachRowListeners(){
-    document.querySelectorAll("#tbody input").forEach(input => {
+  function attachListeners(){
+    // Listen to global TPT input edits (Admin only)
+    document.querySelectorAll(".tpt-input, .workflow-cell input").forEach(input => {
       input.addEventListener("change", (e) => {
         const idx = Number(e.target.dataset.idx);
         const field = e.target.dataset.field;
         let val = e.target.value;
         if(field === "name"){
-          state.rows[idx].name = val;
+          globalTptState.rows[idx].name = val;
         } else {
-          state.rows[idx][field] = val === "" ? null : Number(val);
+          globalTptState.rows[idx][field] = val === "" ? null : Number(val);
         }
         pushToDatabase();
+      });
+    });
+
+    // Listen to local 'Done' input edits
+    document.querySelectorAll(".done-input").forEach(input => {
+      input.addEventListener("change", (e) => {
+        const rowId = e.target.dataset.rowid;
+        const field = e.target.dataset.field;
+        let val = Number(e.target.value) || 0;
+
+        if(!localUserData.dones[rowId]) {
+          localUserData.dones[rowId] = {doneP702:0, doneP758:0, doneDVP:0};
+        }
+        localUserData.dones[rowId][field] = val;
+        saveLocalUserData();
+        render();
       });
     });
 
     document.querySelectorAll(".remove-btn").forEach(btn => {
       btn.addEventListener("click", (e) => {
         const idx = Number(e.currentTarget.dataset.idx);
-        state.rows.splice(idx, 1);
+        globalTptState.rows.splice(idx, 1);
         pushToDatabase();
       });
     });
   }
 
   document.getElementById("projectMins").addEventListener("change", (e) => {
-    state.projectMins = e.target.value === "" ? 0 : Number(e.target.value);
-    pushToDatabase();
+    localUserData.projectMins = e.target.value === "" ? 0 : Number(e.target.value);
+    saveLocalUserData();
+    render();
   });
 
   function addRow(){
-    state.rows.push({name:"New workflow", tptP702:null, tptP758:null, tptDVP:null, doneP702:0, doneP758:0, doneDVP:0});
+    const newId = "wf_" + Date.now();
+    globalTptState.rows.push({id: newId, name:"New workflow", tptP702:null, tptP758:null, tptDVP:null});
     pushToDatabase();
   }
   document.getElementById("addRowBtn").addEventListener("click", addRow);
   document.getElementById("addRowBtn2").addEventListener("click", addRow);
 
   document.getElementById("resetDoneBtn").addEventListener("click", () => {
-    state.rows.forEach(r => { r.doneP702 = 0; r.doneP758 = 0; r.doneDVP = 0; });
-    pushToDatabase();
+    localUserData.dones = {};
+    saveLocalUserData();
+    render();
   });
 
   document.getElementById("resetAllBtn").addEventListener("click", () => {
-    if(confirm("Reset all workflows back to defaults for everyone?")){
-      state = {projectMins: 450, rows: JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS))};
+    if(confirm("Reset global TPT targets back to defaults for all users?")){
+      globalTptState = {rows: JSON.parse(JSON.stringify(DEFAULT_WORKFLOWS))};
       pushToDatabase();
     }
   });
